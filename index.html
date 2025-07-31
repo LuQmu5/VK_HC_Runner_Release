@@ -9,17 +9,14 @@
     <script type="text/javascript" src="https://vk.com/js/api/openapi.js?169"></script>
 
     <script>
-      // Сюда вызывает UnityConnector.OnJoinGroupButtonClick
       function JoinGroupAndSendMessage() {
-        const GROUP_ID = 123456789; // ← ЗАМЕНИ на ID своей группы
-        const MESSAGE_TEXT = "Спасибо за подписку! Вот твой бонус 🎁"; // ← текст в ЛС
+        const GROUP_ID = 1; 
+        const MESSAGE_TEXT = "Спасибо за подписку! Вот твой бонус 🎁"; 
 
-        // Проверяем авторизацию
         VK.Auth.getLoginStatus(function(response) {
           if (response.status === 'connected') {
             const userId = response.session.mid;
 
-            // Показываем окно вступления в группу
             VK.Api.call('groups.isMember', {
               group_id: GROUP_ID,
               user_id: userId,
@@ -46,7 +43,7 @@
           } else {
             VK.Auth.login(function(response) {
               if (response.session) {
-                JoinGroupAndSendMessage(); // повторяем после входа
+                JoinGroupAndSendMessage(); 
               } else {
                 console.error("Не удалось авторизоваться");
               }
@@ -54,8 +51,6 @@
           }
 
           function sendMessage(userId) {
-            // ⚠️ Для отправки сообщений от имени сообщества нужен токен с нужными правами!
-            // Здесь пример вызова:
             fetch('https://your-server.com/api/sendMessage', {
               method: 'POST',
               headers: {
