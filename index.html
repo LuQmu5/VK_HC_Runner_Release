@@ -3,14 +3,82 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Hypercasual Runner</title>
+    <title>Unity Web Player | Hypercasual Runner v.0.01a</title>
+
+    <!-- VK API -->
+    <script type="text/javascript" src="https://vk.com/js/api/openapi.js?169"></script>
+
+    <script>
+      // Сюда вызывает UnityConnector.OnJoinGroupButtonClick
+      function JoinGroupAndSendMessage() {
+        const GROUP_ID = 123456789; // ← ЗАМЕНИ на ID своей группы
+        const MESSAGE_TEXT = "Спасибо за подписку! Вот твой бонус 🎁"; // ← текст в ЛС
+
+        // Проверяем авторизацию
+        VK.Auth.getLoginStatus(function(response) {
+          if (response.status === 'connected') {
+            const userId = response.session.mid;
+
+            // Показываем окно вступления в группу
+            VK.Api.call('groups.isMember', {
+              group_id: GROUP_ID,
+              user_id: userId,
+              v: "5.131"
+            }, function(result) {
+              if (result.response === 1) {
+                console.log("Уже подписан на группу");
+
+                sendMessage(userId);
+              } else {
+                VK.Api.call('groups.join', {
+                  group_id: GROUP_ID,
+                  v: "5.131"
+                }, function(joinResult) {
+                  if (joinResult.response === 1) {
+                    console.log("Успешно подписался на группу");
+                    sendMessage(userId);
+                  } else {
+                    console.error("Ошибка при подписке на группу", joinResult);
+                  }
+                });
+              }
+            });
+          } else {
+            VK.Auth.login(function(response) {
+              if (response.session) {
+                JoinGroupAndSendMessage(); // повторяем после входа
+              } else {
+                console.error("Не удалось авторизоваться");
+              }
+            });
+          }
+
+          function sendMessage(userId) {
+            // ⚠️ Для отправки сообщений от имени сообщества нужен токен с нужными правами!
+            // Здесь пример вызова:
+            fetch('https://your-server.com/api/sendMessage', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                userId: userId,
+                message: MESSAGE_TEXT
+              })
+            }).then(res => res.json())
+              .then(data => console.log("Сообщение отправлено", data))
+              .catch(err => console.error("Ошибка отправки сообщения", err));
+          }
+        });
+      }
+    </script>
   </head>
+
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
     <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #231F20"></canvas>
     <script src="Build/VKRUNNERBUILDWEB.loader.js"></script>
     <script>
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
         var meta = document.createElement('meta');
         meta.name = 'viewport';
         meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
@@ -33,8 +101,6 @@
         companyName: "Meriada _ Vegma",
         productName: "Hypercasual Runner",
         productVersion: "0.01a",
-        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
       });
     </script>
   </body>
