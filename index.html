@@ -1,102 +1,81 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="ru">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Hypercasual Runner v.0.01a</title>
+    <meta charset="utf-8" />
+    <title>Hypercasual Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-    <!-- VK API -->
-    <script type="text/javascript" src="https://vk.com/js/api/openapi.js?169"></script>
-
+    <!-- VK Mini Apps bridge -->
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
     <script>
-      function JoinGroupAndSendMessage() {
-        const GROUP_ID = 1; 
-        const MESSAGE_TEXT = "Спасибо за подписку! Вот твой бонус 🎁"; 
-
-        VK.Auth.getLoginStatus(function(response) {
-          if (response.status === 'connected') {
-            const userId = response.session.mid;
-
-            VK.Api.call('groups.isMember', {
-              group_id: GROUP_ID,
-              user_id: userId,
-              v: "5.131"
-            }, function(result) {
-              if (result.response === 1) {
-                console.log("Уже подписан на группу");
-
-                sendMessage(userId);
-              } else {
-                VK.Api.call('groups.join', {
-                  group_id: GROUP_ID,
-                  v: "5.131"
-                }, function(joinResult) {
-                  if (joinResult.response === 1) {
-                    console.log("Успешно подписался на группу");
-                    sendMessage(userId);
-                  } else {
-                    console.error("Ошибка при подписке на группу", joinResult);
-                  }
-                });
-              }
-            });
-          } else {
-            VK.Auth.login(function(response) {
-              if (response.session) {
-                JoinGroupAndSendMessage(); 
-              } else {
-                console.error("Не удалось авторизоваться");
-              }
-            });
-          }
-
-          function sendMessage(userId) {
-            fetch('https://your-server.com/api/sendMessage', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: userId,
-                message: MESSAGE_TEXT
-              })
-            }).then(res => res.json())
-              .then(data => console.log("Сообщение отправлено", data))
-              .catch(err => console.error("Ошибка отправки сообщения", err));
-          }
-        });
-      }
+      vkBridge.send('VKWebAppInit');
     </script>
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #unity-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        background: #231f20;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
 
-  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-    <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #231F20"></canvas>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas"></canvas>
+    </div>
+
+    <!-- Unity Loader -->
     <script src="Build/VKRUNNERBUILDWEB.loader.js"></script>
     <script>
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-
-        var canvas = document.querySelector("#unity-canvas");
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.position = "fixed";
-
-        document.body.style.textAlign = "left";
-      }
-
       createUnityInstance(document.querySelector("#unity-canvas"), {
-        arguments: [],
         dataUrl: "Build/VKRUNNERBUILDWEB.data",
         frameworkUrl: "Build/VKRUNNERBUILDWEB.framework.js",
         codeUrl: "Build/VKRUNNERBUILDWEB.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Meriada _ Vegma",
         productName: "Hypercasual Runner",
-        productVersion: "0.01a",
+        productVersion: "0.01a"
       });
+    </script>
+
+    <!-- Подписка и сообщение -->
+    <script>
+      function JoinGroupAndSendMessage() {
+        const GROUP_ID = 123456789; // замените на ID вашей группы
+        const BONUS_TEXT = "Спасибо за подписку! 🎁";
+
+        vkBridge.send("VKWebAppJoinGroup", { group_id: GROUP_ID })
+          .then((res) => {
+            if (res.result) {
+              console.log("✅ Успешная подписка");
+
+              // Можно отправить сообщение через сервер, если у вас есть токен и backend
+              // fetch("https://your-server.com/api/send", { ... })
+
+              alert(BONUS_TEXT); // простой пример бонуса
+            } else {
+              console.warn("❌ Пользователь отменил подписку");
+            }
+          })
+          .catch((err) => {
+            console.error("VKBridge error:", err);
+          });
+      }
     </script>
   </body>
 </html>
